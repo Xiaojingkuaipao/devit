@@ -330,7 +330,7 @@ class DeformBottleneckBlock(CNNBlockBase):
 class BasicStem(CNNBlockBase):
     """
     The standard ResNet stem (layers before the first residual block),
-    with a conv, relu and max_pool.
+    with a conv, relu and max_pool.  进入residual block之前的基础stage1 7 * 7的卷积,步长为2,高宽减半
     """
 
     def __init__(self, in_channels=3, out_channels=64, norm="BN"):
@@ -629,20 +629,20 @@ def build_resnet_backbone(cfg, input_shape):
     # fmt: off
     freeze_at           = cfg.MODEL.BACKBONE.FREEZE_AT
     out_features        = cfg.MODEL.RESNETS.OUT_FEATURES
-    depth               = cfg.MODEL.RESNETS.DEPTH
+    depth               = cfg.MODEL.RESNETS.DEPTH # 网络深度
     num_groups          = cfg.MODEL.RESNETS.NUM_GROUPS
     width_per_group     = cfg.MODEL.RESNETS.WIDTH_PER_GROUP
     bottleneck_channels = num_groups * width_per_group
-    in_channels         = cfg.MODEL.RESNETS.STEM_OUT_CHANNELS
-    out_channels        = cfg.MODEL.RESNETS.RES2_OUT_CHANNELS
-    stride_in_1x1       = cfg.MODEL.RESNETS.STRIDE_IN_1X1
+    in_channels         = cfg.MODEL.RESNETS.STEM_OUT_CHANNELS # 第一个residual block(stage res2)的in_channels
+    out_channels        = cfg.MODEL.RESNETS.RES2_OUT_CHANNELS # res2的out_channels
+    stride_in_1x1       = cfg.MODEL.RESNETS.STRIDE_IN_1X1 # 是否在1*1卷积进行下采样(bool)
     res5_dilation       = cfg.MODEL.RESNETS.RES5_DILATION
-    deform_on_per_stage = cfg.MODEL.RESNETS.DEFORM_ON_PER_STAGE
+    deform_on_per_stage = cfg.MODEL.RESNETS.DEFORM_ON_PER_STAGE # 是否在每个阶段使用可变形卷积
     deform_modulated    = cfg.MODEL.RESNETS.DEFORM_MODULATED
     deform_num_groups   = cfg.MODEL.RESNETS.DEFORM_NUM_GROUPS
     # fmt: on
     assert res5_dilation in {1, 2}, "res5_dilation cannot be {}.".format(res5_dilation)
-
+    # 不同深度的网络每个stage对应的residual block 个数
     num_blocks_per_stage = {
         18: [2, 2, 2, 2],
         34: [3, 4, 6, 3],
@@ -676,8 +676,8 @@ def build_resnet_backbone(cfg, input_shape):
         if depth in [18, 34]:
             stage_kargs["block_class"] = BasicBlock
         else:
-            stage_kargs["bottleneck_channels"] = bottleneck_channels
-            stage_kargs["stride_in_1x1"] = stride_in_1x1
+            stage_kargs["bottleneck_channels"] = bottleneck_channels # 中间3 * 3卷积的输出通道数
+            stage_kargs["stride_in_1x1"] = stride_in_1x1 # 是否使用1 * 1卷积进行下采样
             stage_kargs["dilation"] = dilation
             stage_kargs["num_groups"] = num_groups
             if deform_on_per_stage[idx]:

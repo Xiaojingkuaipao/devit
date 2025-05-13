@@ -1,0 +1,75 @@
+[00;34m.[00m
+(0tqq (B[   0]  [00;34minitial[00m/
+(0x   tqq (B[   0]  [00;34mbackground[00m/
+(0x   x   tqq (B[1.6M]  background_prototypes.vitb14.pth
+(0x   x   tqq (B[2.1M]  background_prototypes.vitl14.pth
+(0x   x   mqq (B[796K]  background_prototypes.vits14.pth
+(0x   tqq (B[   0]  [00;34mdemo[00m/
+(0x   x   mqq (B[141K]  ycb_prototypes.pth
+(0x   tqq (B[   0]  [00;34mDINOv2[00m/
+(0x   x   tqq (B[330M]  vitb14.pth
+(0x   x   tqq (B[1.1G]  vitl14.pth
+(0x   x   mqq (B[ 84M]  vits14.pth
+(0x   tqq (B[   0]  [00;34mfew-shot[00m/
+(0x   x   tqq (B[   0]  [00;34mprototypes[00m/
+(0x   x   tqq (B[399M]  vitb+rpn.pth
+(0x   x   tqq (B[1.2G]  vitl+rpn.pth
+(0x   x   mqq (B[153M]  vits+rpn.pth
+(0x   tqq (B[   0]  [00;34moneshot[00m/
+(0x   x   tqq (B[   0]  [00;34mprototypes_for_train[00m/
+(0x   x   tqq (B[ 79M]  ref_coco17.vitl14.pth
+(0x   x   tqq (B[1.2G]  vitl+rpn.split1.pth
+(0x   x   tqq (B[1.2G]  vitl+rpn.split2.pth
+(0x   x   tqq (B[1.2G]  vitl+rpn.split3.pth
+(0x   x   mqq (B[1.2G]  vitl+rpn.split4.pth
+(0x   tqq (B[   0]  [00;34mopen-vocabulary[00m/
+(0x   x   tqq (B[   0]  [00;34mprototypes[00m/
+(0x   x   tqq (B[438M]  vitb+rpn_lvis.pth
+(0x   x   tqq (B[399M]  vitb+rpn.pth
+(0x   x   tqq (B[1.2G]  vitl+rpn_lvis.pth
+(0x   x   tqq (B[1.2G]  vitl+rpn.pth
+(0x   x   tqq (B[191M]  vits+rpn_lvis.pth
+(0x   x   mqq (B[153M]  vits+rpn.pth
+(0x   mqq (B[   0]  [00;34mrpn[00m/
+(0x       tqq (B[   0]  [00;34mfew-shot-coco14[00m/
+(0x       tqq (B[   0]  [00;34mone-shot-split1[00m/
+(0x       tqq (B[   0]  [00;34mone-shot-split2[00m/
+(0x       tqq (B[   0]  [00;34mone-shot-split3[00m/
+(0x       tqq (B[   0]  [00;34mone-shot-split4[00m/
+(0x       tqq (B[   0]  [00;34mopen-vocabulary-coco17[00m/
+(0x       mqq (B[   0]  [00;34mopen-vocabulary-lvis[00m/
+(0mqq (B[   0]  [00;34mtrained[00m/
+(0    tqq (B[   0]  [00;34mfew-shot[00m/
+(0    x   tqq (B[428M]  vitb_0089999.pth
+(0    x   tqq (B[602K]  vitb.eval-log-30-shot.txt
+(0    x   tqq (B[601K]  vitb.eval-log-5-shot.txt
+(0    x   tqq (B[4.1M]  vitb.train-log-10-shot.txt
+(0    x   tqq (B[1.2G]  vitl_0089999.pth
+(0    x   tqq (B[653K]  vitl.eval-log-30-shot.txt
+(0    x   tqq (B[622K]  vitl.eval-log-5-shot.txt
+(0    x   tqq (B[4.3M]  vitl.train-log-10-shot.txt
+(0    x   tqq (B[181M]  vits_0089999.pth
+(0    x   tqq (B[508K]  vits.eval-10-shot-box.txt
+(0    x   tqq (B[508K]  vits.eval-30-shot-box.txt
+(0    x   tqq (B[557K]  vits.eval-30-shot.txt
+(0    x   tqq (B[519K]  vits.eval-5-shot-box.txt
+(0    x   tqq (B[565K]  vits.eval-5-shot.txt
+(0    x   mqq (B[4.2M]  vits.train-log-10-shot.txt
+(0    tqq (B[   0]  [00;34mone-shot[00m/
+(0    x   tqq (B[1.0M]  log-eval.split1.txt
+(0    x   tqq (B[772K]  log-eval.split2.txt
+(0    x   tqq (B[840K]  log-eval.split3.txt
+(0    x   tqq (B[764K]  log-eval.split4.txt
+(0    x   tqq (B[4.1M]  log-train.split1.txt
+(0    x   tqq (B[4.0M]  log-train.split2.txt
+(0    x   tqq (B[7.9M]  log-train.split3.txt
+(0    x   tqq (B[4.0M]  log-train.split4.txt
+(0    x   tqq (B[1.2G]  vitl_0049999.split2.pth
+(0    x   tqq (B[1.2G]  vitl_0064999.split3.pth
+(0    x   tqq (B[1.2G]  vitl_0074999.split1.pth
+(0    x   mqq (B[1.2G]  vitl_0084999.split4.pth
+(0    mqq (B[   0]  [00;34mopen-vocabulary[00m/
+(0        tqq (B[   0]  [00;34mcoco[00m/
+(0        mqq (B[   0]  [00;34mlvis[00m/
+
+24 directories, 48 files

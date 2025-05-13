@@ -29,25 +29,32 @@ def box_merge(a, b):
     rbi = torch.max(a[:, 2:], b[:, 2:])
     return torch.cat([lti, rbi], dim=1) # N x 4
 
-
+                # proposals  gt_boxes
 def augment_rois(pred_rois, gt_rois=None, img_h=-1, img_w=-1, pooler_size=14, min_expansion=0.3, expand_shortest=True):
     """
-    this shall return: 
-    1. augmented rois [N x 4]
-    2. input and output (target) binary mask [N x K x K]
-    3. whether common expansion covers gt [N x 1]
+    Args:
+        pred_rois: Tensor.shape=[num_proposals, 4] RPN输出的proposals
+        gt_rois: Tensor.shape=[num_proposals, 4] 每个proposal对应的真实标注框
+        img_h, img_w:这个batch中的图片统一宽高
+        pooler_size: roi_align参数
+        min_expansion: 控制expand的强度参数，越大proposal expand越多
+    Returns:
+        final_rois: [num_proposal, 4] 经过expand之后的proposals
+        pred_rois_mask: [num_proposals, K, K]: where K is the pooler_size,表示原始proposal在expand之后的框中的roi掩码
+        gt_roi_mask: [num_proposals, K, K]:  表示gt_boxes在expand之后的框中的掩码
+        cover_flag: [num_proposals,] 负样本的地方为true,正样本的地方为false
     """
     device = pred_rois.device
     N = len(pred_rois)
     assert img_h > 0 and img_w > 0
     if gt_rois is not None:
-        assert len(pred_rois) == len(gt_rois)
+        assert len(pred_rois) == len(gt_rois) # 一个proposal对应一个gt_box
 
     # conventional expand
-    tmp = box_xyxy_to_cxcywh(pred_rois)
+    tmp = box_xyxy_to_cxcywh(pred_rois) # 将proposal转化为x,y,w,h格式
     if not expand_shortest:
         tmp[:, 2:] *= (1 + min_expansion * 2)
-    else:
+    else: # 对w,h的维度，根据expand_amount的最小值去扩展宽高
         expand_amount = tmp[:, 2:] * 2 * min_expansion
         expand_amount = expand_amount.min(dim=1).values
         tmp[:, 2] += expand_amount
@@ -56,10 +63,10 @@ def augment_rois(pred_rois, gt_rois=None, img_h=-1, img_w=-1, pooler_size=14, mi
     expanded_rois = box_xyxy_clamp(expanded_rois, h=img_h, w=img_w)
     
     # gt guarantee expansion
-    if gt_rois is not None:
-        gt_expanded_rois = box_merge(pred_rois, gt_rois) # N x 4
-        final_rois = box_merge(expanded_rois, gt_expanded_rois)
-        covered_flag = torch.all(final_rois == expanded_rois, dim=1)
+    if gt_rois is not None: # 如果有proposal对应的gt_box的坐标信息
+        gt_expanded_rois = box_merge(pred_rois, gt_rois) # N x 4 传入的gt和proposal合并，获得包围两个框的新proposal
+        final_rois = box_merge(expanded_rois, gt_expanded_rois) # final_rois已经expand到包含expand的proposal以及gt_box
+        covered_flag = torch.all(final_rois == expanded_rois, dim=1) # 为True的地方为负样本
     else:
         final_rois = expanded_rois
         covered_flag = None
@@ -92,11 +99,16 @@ def augment_rois(pred_rois, gt_rois=None, img_h=-1, img_w=-1, pooler_size=14, mi
 # img_h=image.shape[0], img_w=image.shape[1])
 
 
-def abs_coord_2_region_coord(regions, boxes, resolution):
+def abs_coord_2_region_coord(regions: torch.Tensor, boxes: torch.Tensor, resolution):
     """
-    regions: N x 4 in xyxy
-    boxes: N x 4 in xyxy
-    return: N x 4 in [0, 1] and cxcywh
+    将绝对坐标转化为region中的相对坐标
+    Args:
+        regions: [num_proposals, 4] 已经expand之后的proposal坐标信息
+            对于正样本是包含了整个gt框和最原始预测proposal的框
+        boxes: gt_boxes [num_proposals, 4] proposals对应的真实框标注信息
+        resolution: ROI矩阵的大小
+    Returns:
+        boxes: [num_proposals, 4] gt_boxes在regions中的相对坐标 x,y,w,h格式
     """
     wh = box_xyxy_to_cxcywh(regions)[:, 2:]
     init_step = wh / resolution / 2

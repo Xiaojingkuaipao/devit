@@ -10,11 +10,11 @@ class ShapeSpec(namedtuple("_ShapeSpec", ["channels", "height", "width", "stride
     to complement the lack of shape inference ability among pytorch modules.
 
     Attributes:
-        channels:
-        height:
-        width:
-        stride:
+        channels:通道数
+        height:高度
+        width:宽度
+        stride:步长, 相对于输入图像下采样的比率
     """
-
+    # 继承自namedtuple，通过指定字段访问元素
     def __new__(cls, channels=None, height=None, width=None, stride=None):
         return super().__new__(cls, channels, height, width, stride)

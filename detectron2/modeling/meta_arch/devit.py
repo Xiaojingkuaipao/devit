@@ -433,21 +433,21 @@ class OpenSetDetectorWithExamples(nn.Module):
         super().__init__()
         if ',' in class_prototypes_file:
             class_prototypes_file = class_prototypes_file.split(',')
-        self.register_buffer("pixel_mean", torch.tensor(pixel_mean).view(-1, 1, 1), False)
-        self.register_buffer("pixel_std", torch.tensor(pixel_std).view(-1, 1, 1), False)
+        self.register_buffer("pixel_mean", torch.tensor(pixel_mean).view(-1, 1, 1), False) # [3, 1, 1]
+        self.register_buffer("pixel_std", torch.tensor(pixel_std).view(-1, 1, 1), False) # [3, 1, 1]
         self.backbone = backbone # Modify ResNet
         self.bg_cls_weight = bg_cls_weight
 
         if np.sum(pixel_mean) < 3.0: # converrt pixel value to range [0.0, 1.0] by dividing 255.0
             # assert input_format == 'RGB'
-            self.div_pixel = True
+            self.div_pixel = True # 是否使用图片归一化
         else:
             self.div_pixel = False
 
         # RPN related 
         self.input_format = "RGB"
-        self.offline_backbone = offline_backbone
-        self.offline_proposal_generator = offline_proposal_generator        
+        self.offline_backbone = offline_backbone # Resnet50
+        self.offline_proposal_generator = offline_proposal_generator  # RPN
         if offline_input_format and offline_pixel_mean and offline_pixel_std:
             self.offline_input_format = offline_input_format
             self.register_buffer("offline_pixel_mean", torch.tensor(offline_pixel_mean).view(-1, 1, 1), False)
@@ -496,7 +496,7 @@ class OpenSetDetectorWithExamples(nn.Module):
             raise NotImplementedError()
 
         if len(prototypes.shape) == 3:
-            class_weights = F.normalize(prototypes.mean(dim=1), dim=-1)
+            class_weights = F.normalize(prototypes.mean(dim=1), dim=-1) # [num_classes, num_shots, d_model] -> [num_classes, d_model]
         else:
             class_weights = F.normalize(prototypes, dim=-1)
         
@@ -509,15 +509,15 @@ class OpenSetDetectorWithExamples(nn.Module):
                 mask_cids.append(c)
                 class_weights = torch.cat([class_weights, torch.zeros(1, class_weights.shape[-1])], dim=0)
         
-        train_class_order = [prototype_label_names.index(c) for c in seen_cids]
-        test_class_order = [prototype_label_names.index(c) for c in all_cids]
+        train_class_order = [prototype_label_names.index(c) for c in seen_cids] # 用于训练的类别ID索引, 60类
+        test_class_order = [prototype_label_names.index(c) for c in all_cids] # 用于测试的类别ID索引, 80类
 
         self.label_names = prototype_label_names
 
         assert -1 not in train_class_order and -1 not in test_class_order
 
-        self.register_buffer("train_class_weight", class_weights[torch.as_tensor(train_class_order)])
-        self.register_buffer("test_class_weight", class_weights[torch.as_tensor(test_class_order)])
+        self.register_buffer("train_class_weight", class_weights[torch.as_tensor(train_class_order)]) # 已知类的权重[num_seen_cls, d_model]
+        self.register_buffer("test_class_weight", class_weights[torch.as_tensor(test_class_order)]) # [num_all_als, d_model]
         self.test_class_order = test_class_order
 
         self.all_labels = all_cids
@@ -533,7 +533,7 @@ class OpenSetDetectorWithExamples(nn.Module):
 
             self.test_class_mask = torch.as_tensor([c in mask_cids for c in all_cids])
 
-        bg_protos = torch.load(bg_prototypes_file)
+        bg_protos = torch.load(bg_prototypes_file) # 背景类的prototype [53, num_shots, d_model]
         if isinstance(bg_protos, dict):  # NOTE: connect to dict output of `generate_prototypes`
             bg_protos = bg_protos['prototypes']
         if len(bg_protos.shape) == 3:
@@ -735,9 +735,9 @@ class OpenSetDetectorWithExamples(nn.Module):
                     p.requires_grad = False
 
     @classmethod
-    def from_config(cls, cfg, use_bn=False):
-        offline_cfg = get_cfg()
-        offline_cfg.merge_from_file(cfg.DE.OFFLINE_RPN_CONFIG)
+    def from_config(cls, cfg, use_bn=False): # 自定义模型中要定义这个方法，把config中的参数转化为一个可以供模型初始化的字典，然后用于模型初始化
+        offline_cfg = get_cfg() # 获取一个default_config
+        offline_cfg.merge_from_file(cfg.DE.OFFLINE_RPN_CONFIG) # 命令行中指定的offline_rpn_config路径
         if cfg.DE.OFFLINE_RPN_LSJ_PRETRAINED: # large-scale jittering (LSJ) pretrained RPN
             offline_cfg.MODEL.BACKBONE.FREEZE_AT = 0 # make all fronzon layers to "SyncBN"
             offline_cfg.MODEL.RESNETS.NORM = "BN" # 5 resnet layers
@@ -776,47 +776,47 @@ class OpenSetDetectorWithExamples(nn.Module):
             "class_prototypes_file": cfg.DE.CLASS_PROTOTYPES,
             "bg_prototypes_file": cfg.DE.BG_PROTOTYPES,
 
-            "roialign_size": cfg.MODEL.ROI_BOX_HEAD.POOLER_RESOLUTION,
+            "roialign_size": cfg.MODEL.ROI_BOX_HEAD.POOLER_RESOLUTION, # ROI池化之后的特征图大小
 
-            "offline_backbone": offline_backbone,
-            "offline_proposal_generator": offline_rpn, 
+            "offline_backbone": offline_backbone, # RESNET50
+            "offline_proposal_generator": offline_rpn,  # RPN
             "offline_input_format": offline_cfg.INPUT.FORMAT if offline_cfg else None,
             "offline_pixel_mean": offline_cfg.MODEL.PIXEL_MEAN if offline_cfg else None,
             "offline_pixel_std": offline_cfg.MODEL.PIXEL_STD if offline_cfg else None,
             
-            "proposal_matcher": Matcher(
+            "proposal_matcher": Matcher( # 用于匹配anchor和gt的匹配器
                 cfg.MODEL.ROI_HEADS.IOU_THRESHOLDS,
                 cfg.MODEL.ROI_HEADS.IOU_LABELS,
                 allow_low_quality_matches=False,
             ),
 
             # regression
-            "box2box_transform": Box2BoxTransform(weights=cfg.MODEL.ROI_BOX_HEAD.BBOX_REG_WEIGHTS),
-            "smooth_l1_beta"        : cfg.MODEL.ROI_BOX_HEAD.SMOOTH_L1_BETA,
-            "test_score_thresh"     : cfg.MODEL.ROI_HEADS.SCORE_THRESH_TEST,
+            "box2box_transform": Box2BoxTransform(weights=cfg.MODEL.ROI_BOX_HEAD.BBOX_REG_WEIGHTS), # 用于坐标转换的方法
+            "smooth_l1_beta"        : cfg.MODEL.ROI_BOX_HEAD.SMOOTH_L1_BETA, # smooth l1损失的beta参数
+            "test_score_thresh"     : cfg.MODEL.ROI_HEADS.SCORE_THRESH_TEST, #
             "test_nms_thresh"       : cfg.MODEL.ROI_HEADS.NMS_THRESH_TEST,
-            "test_topk_per_image"   : cfg.TEST.DETECTIONS_PER_IMAGE,
+            "test_topk_per_image"   : cfg.TEST.DETECTIONS_PER_IMAGE, # 每张图片保留的最大框的数量
 
             "box_noise_scale": 0.5,
 
-            "cls_temp": cfg.DE.TEMP,
+            "cls_temp": cfg.DE.TEMP, # 分类稳定系数
             
-            "num_sample_class": cfg.DE.TOPK,
+            "num_sample_class": cfg.DE.TOPK, # 每次训练采样的类别数
             
             
-            "seen_cids": SEEN_CLS_DICT[cfg.DATASETS.TRAIN[0]],
-            "all_cids": ALL_CLS_DICT[cfg.DATASETS.TRAIN[0]],
+            "seen_cids": SEEN_CLS_DICT[cfg.DATASETS.TRAIN[0]], # 训练时可见的类别ID
+            "all_cids": ALL_CLS_DICT[cfg.DATASETS.TRAIN[0]], # 所有的类别ID
             "T_length": cfg.DE.T,
             
-            "bg_cls_weight": cfg.DE.BG_CLS_LOSS_WEIGHT,
-            "batch_size_per_image": cfg.DE.RCNN_BATCH_SIZE,
-            "pos_ratio": cfg.DE.POS_RATIO,
+            "bg_cls_weight": cfg.DE.BG_CLS_LOSS_WEIGHT, # 背景类损失权重
+            "batch_size_per_image": cfg.DE.RCNN_BATCH_SIZE, # 每个图片采样proposal数量
+            "pos_ratio": cfg.DE.POS_RATIO, # 正样本比例
             
             "mult_rpn_score": cfg.DE.MULTIPLY_RPN_SCORE,
 
-            "num_cls_layers": cfg.DE.NUM_CLS_LAYERS,
+            "num_cls_layers": cfg.DE.NUM_CLS_LAYERS, # 分类头层数
             
-            "use_one_shot": cfg.DE.ONE_SHOT_MODE,
+            "use_one_shot": cfg.DE.ONE_SHOT_MODE, # 是否是oneshot模式
             "one_shot_reference": cfg.DE.ONE_SHOT_REFERENCE,
             
             "only_train_mask": cfg.DE.ONLY_TRAIN_MASK,

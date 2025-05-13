@@ -169,8 +169,8 @@ class DinoVisionTransformer(Backbone):
 
         # ************** # 
         out_indices = out_indices or [depth - 1, ]
-        self._out_indices = out_indices
-        self._out_features = [f'res{i}' for i in out_indices]
+        self._out_indices = out_indices # 模型输出的层的索引
+        self._out_features = [f'res{i}' for i in out_indices] # 模型输出的层的名字
         self._out_feature_channels = {}
         self._out_feature_strides = {}
         for n in self._out_features:

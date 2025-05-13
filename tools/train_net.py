@@ -168,7 +168,7 @@ def setup(args):
     cfg.merge_from_list(args.opts)
     cfg.freeze()
     default_setup(cfg, args)
-    print(cfg.DATASETS.TEST)
+    print(f"cfg.DATASETS.TEST:{cfg.DATASETS.TEST}")
     return cfg
 
 
@@ -203,6 +203,7 @@ def main(args):
 
 if __name__ == "__main__":
     args = default_argument_parser().parse_args()
+    print("$DETECTRON2_DATASETS:", os.environ.get("DETECTRON2_DATASETS"))
     print("Command Line Args:", args)
     launch(
         main,

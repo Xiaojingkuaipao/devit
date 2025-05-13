@@ -3,6 +3,7 @@
 instant_test_output
 inference_test_output
 oai_clip_weights
+*.tar.gz
 
 pt_output
 pretrained_ckpt
